@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>오늘의 응원 카드</title>
+<style>
+  :root {
+    --ink: #1b1b1f;
+    --bg1: #ffe14d;
+    --bg2: #ff6fb5;
+  }
+  * { box-sizing: border-box; }
+  html { height: 100%; }
+  body { margin: 0; }
+  body {
+    font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 15% 20%, #4dd6ff 0 12%, transparent 13%),
+      radial-gradient(circle at 85% 80%, #7cff6b 0 10%, transparent 11%),
+      radial-gradient(circle at 90% 15%, #ff8a3d 0 6%, transparent 7%),
+      linear-gradient(135deg, var(--bg1), var(--bg2));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    padding: 24px 16px;
+    min-height: 100%;
+    height: auto;
+    overflow-x: hidden;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(26px, 6vw, 44px);
+    font-weight: 900;
+    letter-spacing: -1px;
+    background: #fff;
+    border: 4px solid var(--ink);
+    border-radius: 999px;
+    padding: 8px 26px;
+    box-shadow: 6px 6px 0 var(--ink);
+    transform: rotate(-2deg);
+  }
+  .stage { perspective: 1200px; width: min(380px, 100%, 52vh); aspect-ratio: 3 / 4; min-width: 240px; }
+  .card {
+    position: relative;
+    width: 100%; height: 100%;
+    transform-style: preserve-3d;
+    transition: transform .8s cubic-bezier(.3, 1.4, .5, 1);
+  }
+  .face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border: 5px solid var(--ink);
+    border-radius: 28px;
+    box-shadow: 10px 10px 0 var(--ink);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 32px 26px;
+    text-align: center;
+    gap: 18px;
+  }
+  .face.back { transform: rotateY(180deg); }
+  .emoji { font-size: 72px; line-height: 1; }
+  .msg {
+    font-size: clamp(22px, 5.4vw, 30px);
+    font-weight: 900;
+    line-height: 1.4;
+    word-break: keep-all;
+  }
+  .no {
+    position: absolute; top: 16px; left: 20px;
+    font-weight: 800; font-size: 14px;
+    background: var(--ink); color: #fff;
+    padding: 4px 10px; border-radius: 999px;
+  }
+  button {
+    font: inherit;
+    font-size: 22px; font-weight: 900;
+    color: var(--ink);
+    background: #fff;
+    border: 4px solid var(--ink);
+    border-radius: 18px;
+    padding: 14px 34px;
+    box-shadow: 6px 6px 0 var(--ink);
+    cursor: pointer;
+    transition: transform .08s, box-shadow .08s;
+  }
+  button:hover { background: #fff7c2; }
+  button:active { transform: translate(5px, 5px); box-shadow: 1px 1px 0 var(--ink); }
+  .hint { margin: -14px 0 0; font-weight: 700; opacity: .75; }
+  canvas { position: fixed; inset: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+  <h1>오늘의 응원 카드 🎉</h1>
+
+  <div class="stage">
+    <div class="card" id="card">
+      <div class="face front" id="front">
+        <span class="no">READY</span>
+        <div class="emoji">🎁</div>
+        <div class="msg">오늘 나한테 필요한 한마디,<br>뽑아 볼까요?</div>
+      </div>
+      <div class="face back" id="back">
+        <span class="no"></span>
+        <div class="emoji"></div>
+        <div class="msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <button id="draw">응원 카드 뽑기!</button>
+  <p class="hint">스페이스바를 눌러도 뽑혀요</p>
+
+  <canvas id="confetti"></canvas>
+
+<script>
+  const MESSAGES = [
+    ["☕", "넌 오늘 커피보다 진하다"],
+    ["🔋", "배터리 1%여도 너는 풀충전 비주얼"],
+    ["🦸", "망토만 안 둘렀지 사실상 히어로"],
+    ["🍗", "오늘 할 일 다 하면 치킨이 너를 부른다"],
+    ["📈", "오늘의 너, 상한가 직행 중"],
+    ["🧲", "행운이 너한테 자석처럼 붙는 날"],
+    ["🐢", "느려도 괜찮아, 거북이가 결국 이겼잖아"],
+    ["🌶️", "오늘 너 좀 매운데? 실력이"],
+    ["🎮", "인생 레벨업 효과음 방금 들렸어"],
+    ["🧠", "뇌세포들이 너 칭찬하느라 회의 중"],
+    ["🚀", "발사 준비 완료, 카운트다운은 생략"],
+    ["🍀", "네잎클로버가 너 보고 질투함"],
+    ["😎", "선글라스 껴, 오늘 너무 빛나니까"],
+    ["🐱", "고양이도 인정한 오늘의 갓생러"],
+    ["🧃", "인생이 레몬을 주면 에이드 차려 버려"],
+    ["🏆", "참가상 말고 그냥 우승하는 날"],
+    ["🍜", "라면 물 맞추듯 오늘도 딱 맞게 해낼 거야"],
+    ["💪", "월요병도 너 보면 도망가"],
+    ["🌈", "비 온 뒤엔 무지개, 고생 뒤엔 너"],
+    ["🎤", "마이크 줘, 오늘 주인공 너잖아"],
+    ["🛌", "쉬는 것도 실력이다. 넌 그것도 잘함"],
+    ["🧁", "오늘 하루, 위에 생크림까지 얹어 줄게"],
+    ["🐝", "부지런함 지수: 꿀벌도 깜짝 놀람"],
+    ["📦", "기대하던 택배처럼 좋은 일 도착 예정"],
+    ["🎯", "오늘 던지는 건 다 명중이야"],
+    ["🦖", "공룡도 멸종했는데 네 열정은 안 해"],
+    ["🌟", "별 다섯 개 리뷰: 오늘의 너, 재구매 의사 100%"],
+    ["🍉", "수박 가운데 한 숟갈처럼 제일 달콤한 하루"],
+    ["🧗", "오르막길이면 다리 근육 무료 PT 중"],
+    ["🥇", "남들은 노력, 넌 그냥 실력 증명 중"],
+  ];
+  const COLORS = ["#4dd6ff", "#ff6fb5", "#ffe14d", "#7cff6b", "#ff8a3d", "#b18cff"];
+
+  const card = document.getElementById("card");
+  const faces = [document.getElementById("front"), document.getElementById("back")];
+  const btn = document.getElementById("draw");
+  faces[0].style.background = "#fff";
+
+  let turns = 0, lastIdx = -1, lastColor = -1, count = 0;
+
+  function pickOther(len, prev) {
+    let i;
+    do { i = Math.floor(Math.random() * len); } while (len > 1 && i === prev);
+    return i;
+  }
+
+  function draw() {
+    const idx = pickOther(MESSAGES.length, lastIdx); lastIdx = idx;
+    const c = pickOther(COLORS.length, lastColor); lastColor = c;
+    count++;
+
+    // 지금 뒤에 숨어 있는 면에 새 문구를 채우고 뒤집는다
+    const hidden = faces[(turns + 1) % 2];
+    hidden.style.background = COLORS[c];
+    hidden.querySelector(".no").textContent = "#" + count;
+    hidden.querySelector(".emoji").textContent = MESSAGES[idx][0];
+    hidden.querySelector(".msg").textContent = MESSAGES[idx][1];
+
+    turns++;
+    card.style.transform = `rotateY(${turns * 180}deg)`;
+    setTimeout(burst, 350);
+  }
+
+  btn.addEventListener("click", draw);
+  document.addEventListener("keydown", e => {
+    if (e.code === "Space" && e.target !== btn) { e.preventDefault(); draw(); }
+  });
+
+  // 색종이
+  const cv = document.getElementById("confetti");
+  const ctx = cv.getContext("2d");
+  let bits = [], running = false;
+  function resize() { cv.width = innerWidth; cv.height = innerHeight; }
+  addEventListener("resize", resize); resize();
+
+  function burst() {
+    const r = card.getBoundingClientRect();
+    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+    for (let i = 0; i < 140; i++) {
+      const a = Math.random() * Math.PI * 2, s = 6 + Math.random() * 10;
+      bits.push({
+        x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 6,
+        w: 6 + Math.random() * 8, h: 4 + Math.random() * 6,
+        rot: Math.random() * 6, vr: (Math.random() - .5) * .4,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)], life: 0,
+      });
+    }
+    if (!running) { running = true; requestAnimationFrame(tick); }
+  }
+
+  function tick() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    bits = bits.filter(b => b.life < 160 && b.y < cv.height + 40);
+    for (const b of bits) {
+      b.vy += .35; b.vx *= .985; b.x += b.vx; b.y += b.vy; b.rot += b.vr; b.life++;
+      ctx.save();
+      ctx.translate(b.x, b.y); ctx.rotate(b.rot);
+      ctx.globalAlpha = Math.max(0, 1 - b.life / 160);
+      ctx.fillStyle = b.color; ctx.strokeStyle = "#1b1b1f"; ctx.lineWidth = 1.5;
+      ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+      ctx.strokeRect(-b.w / 2, -b.h / 2, b.w, b.h);
+      ctx.restore();
+    }
+    if (bits.length) requestAnimationFrame(tick);
+    else { running = false; ctx.clearRect(0, 0, cv.width, cv.height); }
+  }
+</script>
+</body>
+</html>

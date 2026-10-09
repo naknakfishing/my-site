@@ -1,0 +1,348 @@
+<title>우리 집 장보기 메모장</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* 레이아웃: 책상 위 줄공책 한 장, 마트 동선 순서의 구역이 위에서 아래로 */
+  :root {
+    color-scheme: light;
+    --desk: #d9c7a6;
+    --paper: #fff8d6;
+    --rule: #b9d3ea;
+    --margin: #e57373;
+    --ink: #2b3a67;
+    --pencil: #6b6b6b;
+    --pen: #d6455a;
+    --marker: rgba(255, 214, 70, .7);
+    --sticky: #fff2a8;
+    --white: #ffffff;
+    --line-h: 38px;
+    --hand: "Gaegu", "Nanum Pen Script", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100%;
+    background:
+      repeating-linear-gradient(45deg, rgba(0,0,0,.025) 0 2px, transparent 2px 6px),
+      var(--desk);
+    color: var(--ink);
+    font-family: var(--hand);
+    font-size: 24px;
+    padding: 36px 16px 60px;
+  }
+  .pad {
+    position: relative;
+    max-width: 640px;
+    margin: 0 auto;
+    background:
+      linear-gradient(to right, transparent 62px, var(--margin) 62px 64px, transparent 64px),
+      repeating-linear-gradient(to bottom, transparent 0 calc(var(--line-h) - 1px), var(--rule) calc(var(--line-h) - 1px) var(--line-h)),
+      var(--paper);
+    background-position: 0 0, 0 14px, 0 0;
+    border-radius: 4px 4px 10px 10px;
+    box-shadow: 0 2px 0 #efe4b8, 0 4px 0 #e6d9a6, 0 18px 30px rgba(60, 40, 10, .25);
+    padding: 48px 26px 30px 82px;
+  }
+  .rings {
+    position: absolute; top: -12px; left: 40px; right: 40px;
+    display: flex; justify-content: space-between; pointer-events: none;
+  }
+  .rings i {
+    width: 14px; height: 30px; border-radius: 8px;
+    background: linear-gradient(to right, #9a9a9a, #e8e8e8 45%, #8a8a8a);
+    box-shadow: 0 2px 2px rgba(0,0,0,.25);
+  }
+  header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 16px; margin-bottom: 8px; }
+  h1 { margin: 0; font-size: 40px; line-height: 1; font-weight: 700; text-wrap: balance; }
+  .progress { font-size: 21px; color: var(--pencil); margin-top: 4px; }
+  .progress b { color: var(--pen); font-size: 26px; }
+  .status { font-size: 18px; color: var(--pencil); min-height: 24px; }
+  .status.warn { color: var(--pen); }
+
+  .reset-box { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    font: inherit; font-size: 20px; font-weight: 700; color: var(--ink);
+    background: var(--white); border: 2px dashed var(--ink); border-radius: 10px;
+    padding: 2px 14px; cursor: pointer;
+  }
+  .btn:hover { background: var(--sticky); }
+  .btn.solid { border-style: solid; background: var(--ink); color: var(--paper); }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn:focus-visible, form button:focus-visible, .del:focus-visible { outline: 3px solid var(--pen); outline-offset: 2px; }
+
+  section { margin-top: 18px; }
+  h2 { margin: 0; font-size: 27px; line-height: var(--line-h); font-weight: 700; display: flex; align-items: baseline; gap: 10px; }
+  h2 .hl { background: linear-gradient(transparent 55%, var(--marker) 55%); padding: 0 4px; }
+  h2 small { font-size: 18px; color: var(--pencil); font-weight: 400; font-variant-numeric: tabular-nums; }
+
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: flex; align-items: center; gap: 10px; min-height: var(--line-h); }
+  li label { flex: 1; display: flex; align-items: center; gap: 10px; cursor: pointer; min-width: 0; }
+  li input[type=checkbox] {
+    appearance: none; -webkit-appearance: none; flex: none;
+    width: 20px; height: 20px; margin: 0;
+    border: 2px solid var(--ink); border-radius: 4px 6px 3px 5px; background: transparent;
+    position: relative; cursor: pointer;
+  }
+  li input[type=checkbox]:focus-visible { outline: 3px solid var(--pen); outline-offset: 2px; }
+  li input[type=checkbox]:checked::after {
+    content: "✔"; position: absolute; left: 1px; top: -11px;
+    font-size: 26px; color: var(--pen); font-family: var(--hand);
+  }
+  li input[type=checkbox]:disabled { cursor: default; }
+  .text { position: relative; overflow-wrap: anywhere; }
+  .qty { color: var(--pencil); margin-left: 6px; }
+  .text::after {
+    content: ""; position: absolute; left: -4px; top: 52%; height: 2.5px;
+    width: 0; background: var(--pen); border-radius: 2px;
+    transform: rotate(-1.5deg); transition: width .3s ease-out;
+  }
+  li.checked .text { color: var(--pencil); }
+  li.checked .text::after { width: calc(100% + 8px); }
+  .del {
+    font: inherit; font-size: 18px; color: var(--pencil); background: none; border: 0;
+    cursor: pointer; padding: 0 6px; opacity: .45;
+  }
+  li:hover .del, .del:focus { opacity: 1; }
+  .del:hover { color: var(--pen); }
+  .empty { color: var(--pencil); font-size: 20px; }
+
+  form { display: flex; align-items: center; gap: 8px; min-height: var(--line-h); }
+  form input {
+    font: inherit; color: var(--ink); background: transparent;
+    border: 0; border-bottom: 2px dotted var(--pencil);
+    padding: 0 2px; height: 30px; min-width: 0;
+  }
+  form input:focus { outline: none; border-bottom-color: var(--ink); }
+  form input::placeholder { color: #a8a39a; }
+  form .name { flex: 1; }
+  form .amount { width: 90px; }
+  form button {
+    font: inherit; font-size: 18px; font-weight: 700; color: var(--ink);
+    background: none; border: 2px solid var(--ink); border-radius: 50%;
+    width: 30px; height: 30px; line-height: 1; padding: 0; cursor: pointer; flex: none;
+  }
+  form button:hover { background: var(--sticky); }
+
+  .readonly form, .readonly .del, .readonly .reset-box { display: none; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%) translateY(20px);
+    background: var(--sticky); color: var(--ink); border: 2px solid var(--ink);
+    padding: 6px 18px; border-radius: 6px; font-family: var(--hand); font-size: 20px;
+    box-shadow: 3px 3px 0 rgba(0,0,0,.15);
+    opacity: 0; transition: .25s; pointer-events: none; max-width: calc(100% - 32px);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 520px) {
+    body { font-size: 22px; }
+    .pad { padding: 44px 14px 24px 50px; background-position: -24px 0, 0 14px, 0 0; }
+    h1 { font-size: 32px; }
+    form .amount { width: 64px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .text::after, .toast { transition: none; }
+  }
+</style>
+
+<div class="pad" id="pad">
+  <div class="rings"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <header>
+    <div>
+      <h1>우리 집 장보기 ✏️</h1>
+      <div class="progress" id="progress">목록을 불러오는 중…</div>
+      <div class="status" id="status"></div>
+    </div>
+    <div class="reset-box" id="reset-box">
+      <button class="btn" id="reset">🔄 새 장보기</button>
+    </div>
+  </header>
+  <div id="zones"></div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+  const ZONES = [
+    { id: "veg",   title: "🥬 채소·과일" },
+    { id: "meat",  title: "🥩 정육·수산" },
+    { id: "dairy", title: "🥛 유제품·계란" },
+    { id: "proc",  title: "🍜 가공·냉동" },
+    { id: "home",  title: "🧻 생활용품" },
+  ];
+
+  let items = [];          // db에서 받은 품목 [{id, name, qty, zone, checked, order}]
+  let db = null, col = null;
+  let canWrite = true;
+  let loaded = false;
+
+  const wrap = document.getElementById("zones");
+  const pad = document.getElementById("pad");
+  const statusEl = document.getElementById("status");
+
+  function setStatus(msg, warn) {
+    statusEl.textContent = msg || "";
+    statusEl.classList.toggle("warn", !!warn);
+  }
+
+  function render() {
+    const active = document.activeElement;
+    const keep = active && active.dataset && active.dataset.zone
+      ? { zone: active.dataset.zone, field: active.dataset.field, value: active.value } : null;
+    const drafts = {};
+    wrap.querySelectorAll("form").forEach(f => {
+      drafts[f.dataset.zone] = { name: f.querySelector(".name").value, qty: f.querySelector(".amount").value };
+    });
+
+    wrap.innerHTML = "";
+    for (const zone of ZONES) {
+      const list = items.filter(x => x.zone === zone.id);
+      const done = list.filter(x => x.checked).length;
+      const sec = document.createElement("section");
+      sec.innerHTML = `<h2><span class="hl"></span><small>${list.length ? `${done}/${list.length}` : ""}</small></h2>
+        <ul></ul>
+        <form data-zone="${zone.id}">
+          <input class="name" id="name-${zone.id}" data-zone="${zone.id}" data-field="name" placeholder="품목 추가…" aria-label="${zone.title} 품목 이름" maxlength="40">
+          <input class="amount" id="qty-${zone.id}" data-zone="${zone.id}" data-field="qty" placeholder="수량" aria-label="${zone.title} 수량" maxlength="12">
+          <button title="추가" aria-label="${zone.title}에 추가">+</button>
+        </form>`;
+      sec.querySelector(".hl").textContent = zone.title;
+      const ul = sec.querySelector("ul");
+
+      if (!list.length && loaded) {
+        const li = document.createElement("li");
+        li.className = "empty";
+        li.textContent = canWrite ? "아직 비어 있어요. 아래 줄에 적어 보세요." : "아직 비어 있어요.";
+        ul.appendChild(li);
+      }
+
+      for (const item of list) {
+        const li = document.createElement("li");
+        if (item.checked) li.className = "checked";
+        li.innerHTML = `<label><input type="checkbox"><span class="text"><span class="n"></span><span class="qty"></span></span></label>
+          <button class="del" title="지우기" aria-label="지우기">✕</button>`;
+        li.querySelector(".n").textContent = item.name;
+        li.querySelector(".qty").textContent = item.qty ? `· ${item.qty}` : "";
+        const cb = li.querySelector("input");
+        cb.checked = !!item.checked;
+        cb.disabled = !canWrite;
+        cb.setAttribute("aria-label", item.name);
+        cb.addEventListener("change", () => write(col.doc(item.id).update({ checked: cb.checked })));
+        li.querySelector(".del").addEventListener("click", () => {
+          write(col.doc(item.id).delete()).then(ok => ok && toast(`'${item.name}' 지웠어요`));
+        });
+        ul.appendChild(li);
+      }
+
+      const form = sec.querySelector("form");
+      if (drafts[zone.id]) {
+        form.querySelector(".name").value = drafts[zone.id].name;
+        form.querySelector(".amount").value = drafts[zone.id].qty;
+      }
+      form.addEventListener("submit", e => {
+        e.preventDefault();
+        const nameEl = form.querySelector(".name");
+        const qtyEl = form.querySelector(".amount");
+        const name = nameEl.value.trim();
+        if (!name) { nameEl.focus(); return; }
+        if (list.some(x => x.name === name)) { toast(`'${name}'은(는) 이미 있어요`); return; }
+        const qty = qtyEl.value.trim();
+        nameEl.value = ""; qtyEl.value = "";
+        write(col.add({ name, qty, zone: zone.id, checked: false, order: Date.now() }));
+        nameEl.focus();
+      });
+      wrap.appendChild(sec);
+    }
+
+    const done = items.filter(x => x.checked).length;
+    const prog = document.getElementById("progress");
+    if (!loaded) prog.textContent = "목록을 불러오는 중…";
+    else if (!items.length) prog.textContent = "목록이 비어 있어요";
+    else prog.innerHTML = `${items.length}개 중 <b>${done}</b>개 담음${done === items.length ? " — 다 샀다! 🎉" : ""}`;
+
+    if (keep) {
+      const el = document.getElementById(`${keep.field === "name" ? "name" : "qty"}-${keep.zone}`);
+      if (el) el.focus();
+    }
+  }
+
+  async function write(promise) {
+    try { await promise; return true; }
+    catch (e) {
+      if (e && e.code === "invalid_argument" && !items.length) setReadOnly();
+      else if (e && e.code === "quota_exceeded") toast("저장 공간이 꽉 찼어요. 안 쓰는 품목을 지워 주세요.");
+      else toast("저장하지 못했어요. 잠시 뒤 다시 해 주세요.");
+      return false;
+    }
+  }
+
+  function setReadOnly() {
+    canWrite = false;
+    pad.classList.add("readonly");
+    setStatus("보기 전용이에요. 체크는 목록 주인이 편집 권한을 준 사람만 할 수 있어요.");
+    render();
+  }
+
+  // 새 장보기: 페이지 안에서 한 번 더 묻기
+  const resetBox = document.getElementById("reset-box");
+  function showResetButton() {
+    resetBox.innerHTML = `<button class="btn" id="reset">🔄 새 장보기</button>`;
+    document.getElementById("reset").addEventListener("click", askReset);
+  }
+  function askReset() {
+    const n = items.filter(x => x.checked).length;
+    if (!n) { toast("체크한 품목이 없어요"); return; }
+    resetBox.innerHTML = `<span>체크 ${n}개를 모두 풀까요?</span>
+      <button class="btn solid" id="reset-yes">네, 풀기</button>
+      <button class="btn" id="reset-no">아니요</button>`;
+    document.getElementById("reset-yes").addEventListener("click", doReset);
+    document.getElementById("reset-no").addEventListener("click", showResetButton);
+    document.getElementById("reset-yes").focus();
+  }
+  async function doReset() {
+    const checked = items.filter(x => x.checked);
+    showResetButton();
+    const results = await Promise.all(checked.map(x => write(col.doc(x.id).update({ checked: false }))));
+    if (results.every(Boolean)) toast("새 장보기 준비 완료! ✏️");
+  }
+  document.getElementById("reset").addEventListener("click", askReset);
+
+  let toastTimer;
+  function toast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg; t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+  }
+
+  render();
+
+  (async () => {
+    const claude = window.claude;
+    db = claude ? await claude.use("db") : null;
+    if (!db) {
+      loaded = true;
+      canWrite = false;
+      pad.classList.add("readonly");
+      setStatus("목록을 불러오지 못했어요. claude.ai에 로그인한 상태로 이 링크를 열어 주세요.", true);
+      render();
+      return;
+    }
+    const user = await claude.use("user");
+    if (user && user.can) {
+      const allowed = await user.can("data.write");
+      if (allowed === false) setReadOnly();
+    }
+    col = db.collection("items");
+    col.orderBy("order").onSnapshot(snap => {
+      items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      loaded = true;
+      if (statusEl.classList.contains("warn")) setStatus("");
+      render();
+    }, err => {
+      setStatus("목록 연결이 끊겼어요. 새로고침해 주세요.", true);
+    });
+  })();
+</script>
