@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>우리 집 장보기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff0f5;
+    --dot: #ffd6e4;
+    --card: #fffafc;
+    --pink: #ff6f9f;
+    --pink-dark: #e04f83;
+    --pink-soft: #ffe1ec;
+    --line: #f6bfd2;
+    --text: #5b3a4a;
+    --muted: #a8899a;
+    --done: #c7aab8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--bg);
+    background-image: radial-gradient(var(--dot) 1.5px, transparent 1.5px);
+    background-size: 22px 22px;
+    color: var(--text);
+    font-family: "Gaegu", "Comic Sans MS", "Malgun Gothic", sans-serif;
+    font-size: 20px;
+    line-height: 1.35;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 28px 16px 60px; }
+
+  header { text-align: center; margin-bottom: 20px; }
+  h1 {
+    margin: 0;
+    font-size: 44px;
+    font-weight: 700;
+    color: var(--pink-dark);
+    letter-spacing: 1px;
+  }
+  h1 .heart { display: inline-block; animation: beat 1.6s ease-in-out infinite; }
+  @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+  .progress { margin-top: 4px; font-size: 22px; color: var(--muted); }
+  .progress b { color: var(--pink-dark); }
+  .bar {
+    height: 12px; margin: 10px auto 0; max-width: 320px;
+    background: #fff; border: 2px dashed var(--line); border-radius: 999px; overflow: hidden;
+  }
+  .bar span { display: block; height: 100%; width: 0; background: var(--pink); border-radius: 999px; transition: width .3s; }
+
+  /* 추가 칸 */
+  .add {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    background: var(--card);
+    border: 2.5px solid var(--line);
+    border-radius: 22px;
+    padding: 14px;
+    box-shadow: 4px 4px 0 var(--pink-soft);
+    margin-bottom: 26px;
+  }
+  .add input, .add select, .add button {
+    font: inherit; color: inherit;
+    border: 2px solid var(--line); border-radius: 14px;
+    padding: 6px 12px; background: #fff; min-width: 0;
+  }
+  .add input:focus, .add select:focus { outline: none; border-color: var(--pink); }
+  .add .name { flex: 2 1 160px; }
+  .add .qty { flex: 1 1 80px; }
+  .add select { flex: 1 1 130px; }
+  .add button {
+    flex: 0 0 auto;
+    background: var(--pink); border-color: var(--pink); color: #fff; font-weight: 700;
+    cursor: pointer;
+  }
+  .add button:hover { background: var(--pink-dark); border-color: var(--pink-dark); }
+
+  /* 종류별 카드 */
+  .card {
+    background: var(--card);
+    border: 2.5px solid var(--line);
+    border-radius: 24px;
+    padding: 14px 18px 10px;
+    margin-bottom: 22px;
+    box-shadow: 4px 4px 0 var(--pink-soft);
+    position: relative;
+  }
+  .card:nth-child(odd) { transform: rotate(-0.6deg); }
+  .card:nth-child(even) { transform: rotate(0.6deg); }
+  .card::before {
+    content: ""; position: absolute; top: -11px; left: 50%;
+    width: 70px; height: 20px; margin-left: -35px;
+    background: rgba(255, 143, 180, .45); border-radius: 4px; transform: rotate(-3deg);
+  }
+  .card h2 {
+    margin: 0 0 6px; font-size: 26px; font-weight: 700;
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  .card h2 small { font-size: 18px; color: var(--muted); font-weight: 400; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 2px;
+    border-bottom: 2px dashed var(--pink-soft);
+  }
+  li:last-child { border-bottom: none; }
+  .check {
+    flex: 0 0 auto;
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 2.5px solid var(--pink); background: #fff;
+    display: grid; place-items: center;
+    font-size: 17px; color: transparent;
+    cursor: pointer; padding: 0; transition: transform .15s;
+  }
+  .check:hover { transform: scale(1.1); }
+  .label { flex: 1; cursor: pointer; user-select: none; word-break: break-all; }
+  .qtytag { color: var(--muted); font-size: 18px; margin-left: 4px; }
+  li.done .check { background: var(--pink); color: #fff; }
+  li.done .label { color: var(--done); text-decoration: line-through; text-decoration-color: var(--pink); text-decoration-thickness: 2px; }
+  li.done .qtytag { color: var(--done); }
+  .del {
+    flex: 0 0 auto; border: none; background: none; cursor: pointer;
+    font: inherit; font-size: 20px; color: var(--done); padding: 0 4px;
+    opacity: .6;
+  }
+  .del:hover { color: var(--pink-dark); opacity: 1; }
+  .empty { color: var(--muted); font-size: 18px; padding: 4px 2px 8px; }
+
+  .bottom { text-align: center; margin-top: 10px; }
+  .reset {
+    font: inherit; font-size: 22px; font-weight: 700;
+    color: var(--pink-dark); background: #fff;
+    border: 2.5px dashed var(--pink); border-radius: 999px;
+    padding: 8px 26px; cursor: pointer;
+  }
+  .reset:hover { background: var(--pink-soft); }
+  .note { margin-top: 12px; font-size: 16px; color: var(--muted); }
+
+  @media (max-width: 420px) {
+    h1 { font-size: 36px; }
+    .card { transform: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>우리 집 장보기 <span class="heart">🛒</span></h1>
+    <div class="progress" id="progress"></div>
+    <div class="bar"><span id="bar"></span></div>
+  </header>
+
+  <form class="add" id="addForm" autocomplete="off">
+    <input class="name" id="nameInput" placeholder="무엇을 살까요?" required>
+    <input class="qty" id="qtyInput" placeholder="수량">
+    <select id="catSelect"></select>
+    <button type="submit">＋ 추가</button>
+  </form>
+
+  <main id="list"></main>
+
+  <div class="bottom">
+    <button class="reset" id="resetBtn" type="button">🔄 체크 모두 풀기</button>
+    <div class="note">이 브라우저 안에만 저장돼요 💗</div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = "our-home-shopping-list-v1";
+
+  const CATEGORIES = [
+    { id: "veg",   name: "채소·과일",     icon: "🥬" },
+    { id: "meat",  name: "고기·생선",     icon: "🥩" },
+    { id: "dairy", name: "유제품·달걀",   icon: "🥛" },
+    { id: "grain", name: "곡물·가공식품", icon: "🍚" },
+    { id: "life",  name: "생활용품",      icon: "🧻" },
+  ];
+
+  const DEFAULT_ITEMS = [
+    ["veg", "대파", "1단"], ["veg", "양파", "1망"], ["veg", "사과", "4개"],
+    ["meat", "돼지고기", "600g"], ["meat", "고등어", "1손"],
+    ["dairy", "우유", "1통"], ["dairy", "계란", "1판"],
+    ["grain", "두부", "1모"], ["grain", "쌀", "10kg"], ["grain", "라면", "1봉"],
+    ["life", "휴지", "1팩"], ["life", "세제", "1통"],
+  ];
+
+  let items = load();
+
+  function newId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  function makeDefaults() {
+    const now = Date.now();
+    return DEFAULT_ITEMS.map(([cat, name, qty], i) => ({
+      id: newId(), cat, name, qty, done: false, addedAt: now + i, doneAt: 0,
+    }));
+  }
+
+  function load() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) { /* 저장소를 못 쓰면 기본 목록으로 시작 */ }
+    return makeDefaults();
+  }
+
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch (e) {}
+  }
+
+  function el(tag, cls, text) {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  function render() {
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    CATEGORIES.forEach(cat => {
+      const mine = items.filter(it => it.cat === cat.id);
+      // 안 산 것은 넣은 순서대로, 산 것은 체크한 순서대로 맨 아래
+      const todo = mine.filter(it => !it.done).sort((a, b) => a.addedAt - b.addedAt);
+      const done = mine.filter(it => it.done).sort((a, b) => a.doneAt - b.doneAt);
+
+      const card = el("section", "card");
+      const h2 = el("h2", null, `${cat.icon} ${cat.name}`);
+      h2.appendChild(el("small", null, mine.length ? `${done.length}/${mine.length}` : ""));
+      card.appendChild(h2);
+
+      const ul = el("ul");
+      [...todo, ...done].forEach(it => ul.appendChild(renderItem(it)));
+      card.appendChild(ul);
+      if (!mine.length) card.appendChild(el("div", "empty", "아직 비어 있어요"));
+
+      list.appendChild(card);
+    });
+
+    const total = items.length;
+    const doneCount = items.filter(it => it.done).length;
+    document.getElementById("progress").innerHTML = total
+      ? `${total}개 중 <b>${doneCount}개</b> 담았어요` + (doneCount === total ? " 🎉" : "")
+      : "목록이 비어 있어요";
+    document.getElementById("bar").style.width = total ? (doneCount / total * 100) + "%" : "0";
+  }
+
+  function renderItem(it) {
+    const li = el("li", it.done ? "done" : "");
+
+    const check = el("button", "check", "♥");
+    check.type = "button";
+    check.setAttribute("aria-label", `${it.name} ${it.done ? "체크 풀기" : "체크"}`);
+    check.onclick = () => toggle(it.id);
+
+    const label = el("span", "label", it.name);
+    if (it.qty) label.appendChild(el("span", "qtytag", `· ${it.qty}`));
+    label.onclick = () => toggle(it.id);
+
+    const del = el("button", "del", "✕");
+    del.type = "button";
+    del.title = "지우기";
+    del.setAttribute("aria-label", `${it.name} 지우기`);
+    del.onclick = () => remove(it.id);
+
+    li.append(check, label, del);
+    return li;
+  }
+
+  function toggle(id) {
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    it.done = !it.done;
+    it.doneAt = it.done ? Date.now() : 0;
+    save(); render();
+  }
+
+  function remove(id) {
+    const it = items.find(x => x.id === id);
+    if (!it || !confirm(`'${it.name}'을(를) 목록에서 지울까요?`)) return;
+    items = items.filter(x => x.id !== id);
+    save(); render();
+  }
+
+  // 종류 고르기 칸 채우기
+  const catSelect = document.getElementById("catSelect");
+  CATEGORIES.forEach(cat => {
+    const opt = el("option", null, `${cat.icon} ${cat.name}`);
+    opt.value = cat.id;
+    catSelect.appendChild(opt);
+  });
+
+  document.getElementById("addForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const nameInput = document.getElementById("nameInput");
+    const qtyInput = document.getElementById("qtyInput");
+    const name = nameInput.value.trim();
+    if (!name) return;
+    items.push({
+      id: newId(), cat: catSelect.value, name, qty: qtyInput.value.trim(),
+      done: false, addedAt: Date.now(), doneAt: 0,
+    });
+    save(); render();
+    nameInput.value = ""; qtyInput.value = "";
+    nameInput.focus();
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    if (!items.some(it => it.done)) return;
+    items.forEach(it => { it.done = false; it.doneAt = 0; });
+    save(); render();
+  });
+
+  render();
+</script>
+</body>
+</html>
